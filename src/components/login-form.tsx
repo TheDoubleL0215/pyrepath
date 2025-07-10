@@ -79,6 +79,7 @@ export function LoginForm({
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
+            <a href="/signup">Create new account</a>
           </form>
         </CardContent>
       </Card>
