@@ -8,8 +8,9 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static assets and API routes
+  // Ne irányítsuk át, ha már a /login oldalon vagy statikus assetet kérünk
   if (
+    pathname.startsWith('/login') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon.ico')
@@ -17,26 +18,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Supabase SSR session ellenőrzés
   const supabase = createServerClient(supabaseUrl!, supabaseKey!, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll() {}, // No need to write cookies in middleware
+      setAll() {}, // Middleware-ben nem kell írni
     },
   });
 
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Redirect unauthenticated users to /login (except if they're already going to /login or /signup)
   if (!session) {
-    if (pathname !== '/login' && pathname !== '/signup') {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/login';
-      loginUrl.search = '';
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next(); // Allow access to /login or /signup if not authenticated
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    loginUrl.search = '';
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
@@ -44,4 +42,4 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: ['/((?!_next|api|favicon.ico).*)'],
-};
+}; 
