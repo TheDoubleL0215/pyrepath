@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
@@ -99,17 +98,6 @@ export function RegisterForm({
               </Button>
             </div>
           </form>
-
-          <div className="bg-muted hidden md:block">
-            <Image
-              src="/assets/prom-spaceship.png"
-              alt="Spaceship illustration"
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="w-full h-auto object-cover"
-            />
-          </div>
         </CardContent>
       </Card>
     </div>
