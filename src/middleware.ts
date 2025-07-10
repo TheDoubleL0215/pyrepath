@@ -11,6 +11,7 @@ export async function middleware(request: NextRequest) {
   // Ne irányítsuk át, ha már a /login oldalon vagy statikus assetet kérünk
   if (
     pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon.ico')
