@@ -8,7 +8,7 @@ const TABLE_NAME = process.env.NOCODB_TABLE_NAME || 'leads';
 // Helper függvény a NocoDB API hívásokhoz
 async function nocodbRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${NOCODB_URL}/api/v2/tables/${TABLE_NAME}/records${endpoint}`;
-  
+
   const headers = {
     'Content-Type': 'application/json',
     'xc-token': NOCODB_API_KEY,
@@ -19,7 +19,7 @@ async function nocodbRequest(endpoint: string, options: RequestInit = {}) {
     ...options,
     headers,
   });
-  
+
   if (!response.ok) {
     throw new Error(`NocoDB API hiba: ${response.status} ${response.statusText}`);
   }
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (sort) endpoint += `&sort=${sort}`;
 
     const data = await nocodbRequest(endpoint);
-    
+
     return NextResponse.json({
       success: true,
       data: data.list || data,
@@ -60,12 +60,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const data = await nocodbRequest('', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    
+
     return NextResponse.json({
       success: true,
       data,
@@ -105,10 +105,11 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`PATCH hiba: ${response.status} ${response.statusText}`);
+      throw new Error(`PATCH hiba: ${response.statusText}`);
     }
 
     const data = await response.json();
+
 
     return NextResponse.json({
       success: true,
@@ -129,7 +130,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const recordId = searchParams.get('id');
-    
+
     if (!recordId) {
       return NextResponse.json(
         { success: false, error: 'Hiányzó rekord ID' },
@@ -140,7 +141,7 @@ export async function DELETE(request: NextRequest) {
     await nocodbRequest(`/${recordId}`, {
       method: 'DELETE',
     });
-    
+
     return NextResponse.json({
       success: true,
       message: 'Rekord sikeresen törölve',
@@ -152,5 +153,5 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
 

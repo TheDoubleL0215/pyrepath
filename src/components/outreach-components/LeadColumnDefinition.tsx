@@ -1,35 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Lead } from "@/const/Lead"
 import { StatusBadge } from "./StatusBadgeColor"
 
 export const leadColumns: ColumnDef<Lead>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
   {
     accessorKey: "Company",
     header: "Company",
@@ -57,5 +30,5 @@ export const leadColumns: ColumnDef<Lead>[] = [
       const status = row.getValue("Status") as string
       return <StatusBadge status={status} />
     },
-  }
+  },
 ]

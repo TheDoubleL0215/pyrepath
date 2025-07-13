@@ -3,23 +3,19 @@
 import * as React from "react"
 import { flexRender } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Lead } from "@/const/Lead"
 import { useLeadTable } from "@/hooks/use-lead-table"
 import { LeadDialog } from "@/components/outreach-components/LeadDialog"
 import { TableControls } from "@/components/outreach-components/TableControls"
 import { leadColumns } from "@/components/outreach-components/LeadColumnDefinition"
+import { LeadDetailsModal } from "./outreach-components/LeadDetailsModal"
+import { IconPhoneOutgoing } from "@tabler/icons-react"
 
 interface OutreachDataTableProps {
   data: Lead[]
 }
+
+// Modal component to display and edit all lead details
 
 export function OutreachDataTable({ data }: OutreachDataTableProps) {
   const { table, refreshData } = useLeadTable(data)
@@ -27,9 +23,61 @@ export function OutreachDataTable({ data }: OutreachDataTableProps) {
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
 
+  // State for the expand modal
+  const [expandModalOpen, setExpandModalOpen] = React.useState(false)
+  const [expandedLead, setExpandedLead] = React.useState<Lead | null>(null)
+
   const handleRowClick = (lead: Lead) => {
     setSelectedLead(lead)
     setDialogOpen(true)
+  }
+
+  const handleExpandClickRow = (lead: Lead) => {
+    setExpandedLead(lead)
+    setExpandModalOpen(true)
+  }
+
+
+  const handleExpandClick = (e: React.MouseEvent, lead: Lead) => {
+    e.stopPropagation() // Prevent row click
+    setExpandedLead(lead)
+    setExpandModalOpen(true)
+  }
+
+  const handleExpandSave = async (updatedLead: Lead & { createdAt?: string; updatedAt?: string }) => {
+    setIsLoading(true)
+
+    const { CreatedAt, UpdatedAt, ...sanitizedLead } = updatedLead
+
+    try {
+      const response = await fetch(`/api/nocodb?id=${updatedLead.Id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sanitizedLead),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update record')
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        await refreshData()
+        setExpandModalOpen(false)
+        setExpandedLead(null)
+      } else {
+        console.error('Failed to update record:', result.error)
+        throw new Error(result.error || 'Failed to update record')
+      }
+    } catch (error) {
+      console.error('Error updating record:', error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSave = async (formData: {
@@ -80,54 +128,70 @@ export function OutreachDataTable({ data }: OutreachDataTableProps) {
       <TableControls table={table} />
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader className="bg-secondary">
+        <table className="w-full">
+          <thead className="bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <th key={header.id} className="px-4 py-2 text-left">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                         header.column.columnDef.header,
                         header.getContext()
                       )}
-                  </TableHead>
+                  </th>
                 ))}
-              </TableRow>
+                {/* Move expand column header to end */}
+                <th className="w-[50px] px-4 py-2 text-left" />
+              </tr>
             ))}
-          </TableHeader>
-          <TableBody>
+          </thead>
+
+          <tbody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
+                <tr
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleRowClick(row.original)}
+                  className="cursor-pointer hover:bg-muted/50 border-b"
+                  onClick={() => handleExpandClickRow(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                    <td key={cell.id} className="px-4 py-2">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
                   ))}
-                </TableRow>
+                  {/* Move expand button to end */}
+                  <td className="w-[50px] px-4 py-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRowClick(row.original)
+                      }}
+
+                      className="h-8 w-8 p-0"
+                    >
+                      <IconPhoneOutgoing className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
               ))
             ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={leadColumns.length}
-                  className="h-24 text-center"
+              <tr>
+                <td
+                  colSpan={leadColumns.length + 1}
+                  className="h-24 text-center px-4 py-2"
                 >
                   Not found!
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+
+        </table>
       </div>
 
       <div className="flex items-center justify-end space-x-2">
@@ -158,12 +222,21 @@ export function OutreachDataTable({ data }: OutreachDataTableProps) {
         </div>
       </div>
 
+      {/* Existing edit dialog */}
       <LeadDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         lead={selectedLead}
         onSave={handleSave}
         isLoading={isLoading}
+      />
+
+      {/* New expand modal */}
+      <LeadDetailsModal
+        lead={expandedLead}
+        open={expandModalOpen}
+        onOpenChange={setExpandModalOpen}
+        onSave={handleExpandSave}
       />
     </div>
   )

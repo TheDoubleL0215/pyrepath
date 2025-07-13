@@ -96,7 +96,7 @@ export function LeadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Lead Details - {lead?.Company}</DialogTitle>
+          <DialogTitle>Lead Outcome - {lead?.Company}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           {/* Outcome Dropdown */}
